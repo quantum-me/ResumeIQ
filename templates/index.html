@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ResumeIQ &mdash; AI Career Intelligence Platform</title>
+  <meta name="description" content="Understand your resume. Match your potential. Build your next opportunity.">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+</head>
+<body>
+
+  <!-- ========================================================================
+       Top Navigation Bar
+       ======================================================================== -->
+  <header class="header-nav">
+    <div class="nav-container">
+      <div class="brand-wrapper" onclick="switchTab('dashboard')">
+        <div class="brand-icon">IQ</div>
+        <div class="brand-info">
+          <span class="brand-title">ResumeIQ</span>
+          <span class="brand-tagline">AI Career Intelligence</span>
+        </div>
+      </div>
+
+      <nav class="nav-tabs">
+        <button class="nav-tab active" data-tab="dashboard">🏠 Dashboard</button>
+        <button class="nav-tab" data-tab="resume">📄 My Resume</button>
+        <button class="nav-tab" data-tab="match">🎯 Job Match</button>
+        <button class="nav-tab" data-tab="skillgap">🧩 Skill Gap</button>
+        <button class="nav-tab" data-tab="sections">🔍 Diagnostics & Risks</button>
+        <button class="nav-tab" data-tab="assistant">✍️ Bullet Rewriter</button>
+        <button class="nav-tab" data-tab="multijob">🔄 Multi-Job</button>
+        <button class="nav-tab" data-tab="evolution">📈 Evolution</button>
+        <button class="nav-tab" data-tab="tracker">💼 Tracker</button>
+        <button class="nav-tab" data-tab="report">📑 PDF Report</button>
+      </nav>
+
+      <div class="nav-actions">
+        <button id="theme-toggle-btn" class="btn-icon-only" title="Toggle Dark/Light Mode">☀️</button>
+        <button class="btn btn-sm btn-primary" onclick="document.getElementById('file-input').click()">
+          ⬆ Upload Resume
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       Main Content Area
+       ======================================================================== -->
+  <main class="main-wrapper">
+
+    <!-- Hero Card & Quick Sample Switcher -->
+    <section class="hero-card">
+      <div class="hero-badge">AI Career Intelligence Engine</div>
+      <h1 class="hero-title">
+        Your resume is more than a document.<br/>
+        <span>ResumeIQ turns it into actionable intelligence.</span>
+      </h1>
+      <p class="hero-subtitle">
+        Understand your resume. Match your potential. Diagnose skill gaps. Rewriting bullets with measurable impact. Compare multiple roles in real time.
+      </p>
+
+      <div class="sample-presets">
+        <span class="sample-label">Try instant sample resumes:</span>
+        <div id="sample-pills-container" style="display: inline-flex; gap: 0.5rem; flex-wrap: wrap;"></div>
+      </div>
+    </section>
+
+    <!-- Upload & Dropzone Area -->
+    <div class="dropzone-container">
+      <div class="dropzone" id="upload-dropzone">
+        <div class="dropzone-icon">📄</div>
+        <div class="dropzone-title">Drop your resume here or Browse</div>
+        <div class="dropzone-sub">Supports PDF & DOCX format &bull; Max 16MB</div>
+        <input type="file" id="file-input" accept=".pdf,.docx,.doc,.txt" style="display: none;">
+      </div>
+
+      <div class="paste-box">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <label style="font-size: 0.84rem; font-weight: 600; color: var(--text-secondary);">
+            Or paste raw resume text:
+          </label>
+          <button id="btn-analyze-pasted" class="btn btn-sm btn-secondary">Analyze Text</button>
+        </div>
+        <textarea id="pasted-resume-text" class="paste-textarea" placeholder="Paste resume plain text here to instantly diagnose..."></textarea>
+      </div>
+    </div>
+
+    <!-- Scanning / Processing Overlay -->
+    <div id="scanning-overlay" class="scanning-overlay">
+      <div class="scanning-pulse">⚡</div>
+      <h3 style="font-size: 1.15rem; font-weight: 600;">Analyzing Resume Intelligence...</h3>
+      <p style="font-size: 0.82rem; color: var(--text-muted);">Constructing skill evidence graph and evaluating career dimensions</p>
+
+      <div class="pipeline-steps">
+        <div class="pipeline-step active">
+          <span class="step-icon">➔</span>
+          <span>1. Extracting text & tokenizing document structure</span>
+        </div>
+        <div class="pipeline-step">
+          <span class="step-icon">○</span>
+          <span>2. Classifying semantic sections & contact points</span>
+        </div>
+        <div class="pipeline-step">
+          <span class="step-icon">○</span>
+          <span>3. Evidence-based skill extraction (Projects + Experience)</span>
+        </div>
+        <div class="pipeline-step">
+          <span class="step-icon">○</span>
+          <span>4. Multi-factor ATS scoring & anti-pattern risk detection</span>
+        </div>
+        <div class="pipeline-step">
+          <span class="step-icon">○</span>
+          <span>5. Finalizing career diagnostic recommendations</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         VIEW 1: Dashboard
+         ==================================================================== -->
+    <div id="view-dashboard" class="view-section active">
+      <!-- Welcome Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h2 style="font-size: 1.5rem; font-weight: 700;">Welcome back, <span id="dash-candidate-name">Candidate</span> 👋</h2>
+          <p id="dash-contact-summary" style="font-size: 0.84rem; color: var(--text-muted);">Candidate Profile &bull; Updated today</p>
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+          <button class="btn btn-secondary btn-sm" onclick="switchTab('match')">🎯 Match With Job</button>
+          <button class="btn btn-primary btn-sm" onclick="switchTab('report')">📑 Download Report</button>
+        </div>
+      </div>
+
+      <!-- Top Row: Resume Health Gauge + Quick Stats -->
+      <div class="grid-2">
+        <!-- Resume Health Card -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">🩺 Resume Health Score</span>
+            <span class="badge badge-success">ATS Ready</span>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-around; flex-wrap: wrap; gap: 1.5rem;">
+            <div class="score-gauge-box">
+              <svg viewBox="0 0 36 36" class="circular-chart">
+                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <path id="dash-health-gauge" class="circle blue" stroke-dasharray="82, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <text x="18" y="20.35" class="percentage" id="dash-health-number">82</text>
+              </svg>
+              <span class="gauge-caption">Overall Health / 100</span>
+            </div>
+
+            <div style="flex: 1; min-width: 200px;">
+              <div class="grid-2" style="margin-bottom: 0.5rem; gap: 0.75rem;">
+                <div style="background: var(--bg-card-alt); padding: 0.65rem; border-radius: var(--radius-md); text-align: center;">
+                  <span style="font-size: 0.75rem; color: var(--text-muted);">Skills Depth</span>
+                  <div id="dash-skills-score" style="font-size: 1.15rem; font-weight: 700; color: var(--accent-primary);">91%</div>
+                </div>
+                <div style="background: var(--bg-card-alt); padding: 0.65rem; border-radius: var(--radius-md); text-align: center;">
+                  <span style="font-size: 0.75rem; color: var(--text-muted);">Project Evidence</span>
+                  <div id="dash-projects-score" style="font-size: 1.15rem; font-weight: 700; color: var(--success);">84%</div>
+                </div>
+                <div style="background: var(--bg-card-alt); padding: 0.65rem; border-radius: var(--radius-md); text-align: center;">
+                  <span style="font-size: 0.75rem; color: var(--text-muted);">Keywords Coverage</span>
+                  <div id="dash-keywords-score" style="font-size: 1.15rem; font-weight: 700; color: var(--info);">76%</div>
+                </div>
+                <div style="background: var(--bg-card-alt); padding: 0.65rem; border-radius: var(--radius-md); text-align: center;">
+                  <span style="font-size: 0.75rem; color: var(--text-muted);">Quantified Impact</span>
+                  <div id="dash-quantified-score" style="font-size: 1.15rem; font-weight: 700; color: var(--warning);">78%</div>
+                </div>
+              </div>
+              <button class="btn btn-sm btn-secondary" style="width: 100%; margin-top: 0.5rem;" onclick="switchTab('resume')">
+                View Full Diagnostic Breakdown →
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Latest Job Match Card -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">🎯 Latest Job Match</span>
+            <span class="badge badge-info">Benchmark</span>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 0.9rem;">
+            <div>
+              <h3 id="dash-job-role-title" style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.2rem;">
+                Software Engineer (Full Stack)
+              </h3>
+              <p style="font-size: 0.8rem; color: var(--text-muted);">Standard Industry Benchmark</p>
+            </div>
+
+            <div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.84rem; margin-bottom: 0.35rem;">
+                <span>Match Score</span>
+                <strong id="dash-job-match-pct" style="color: var(--accent-primary);">82%</strong>
+              </div>
+              <div class="progress-track" style="height: 10px;">
+                <div id="dash-job-match-bar" class="progress-bar" style="width: 82%;"></div>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; font-size: 0.84rem;">
+              <span id="dash-matched-count-text" style="color: var(--success); font-weight: 600;">✓ 18 skills matched</span>
+              <span id="dash-missing-count-text" style="color: var(--warning); font-weight: 600;">⚠ 4 skills missing</span>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+              <button class="btn btn-sm btn-primary" onclick="switchTab('match')">View Analysis →</button>
+              <button class="btn btn-sm btn-secondary" onclick="switchTab('skillgap')">View Skill Gap →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Second Row: Career Domains & Role Recommendations -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">🌐 Detected Domain Alignments</span>
+          </div>
+          <p style="font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 0.85rem;">
+            Taxonomy mapping of your technical stack across career specializations:
+          </p>
+          <div id="dash-top-domains" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">💼 Top Recommended Role</span>
+            <span id="dash-recommended-alignment" class="badge badge-success">High Fit</span>
+          </div>
+          <h4 id="dash-recommended-role" style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.3rem;">
+            Full Stack Software Engineer
+          </h4>
+          <p id="dash-recommended-why" style="font-size: 0.84rem; color: var(--text-secondary); line-height: 1.5;">
+            Your skills in Python, JavaScript, React, and PostgreSQL strongly match full stack engineering criteria.
+          </p>
+          <button class="btn btn-sm btn-secondary" style="margin-top: 0.85rem;" onclick="switchTab('multijob')">
+            Compare Against All 6 Roles →
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         VIEW 2: Resume Diagnostic (Evidence-Based Skill Engine)
+         ==================================================================== -->
+    <div id="view-resume" class="view-section">
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+          <span class="card-title">👤 Contact & Structural Profile</span>
+          <span class="badge badge-neutral">Extracted Automatically</span>
+        </div>
+        <div class="grid-3">
+          <div>
+            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Full Name</span>
+            <div id="diag-name" style="font-weight: 600;">Candidate</div>
+          </div>
+          <div>
+            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Email</span>
+            <div id="diag-email" style="font-weight: 500;">email@domain.com</div>
+          </div>
+          <div>
+            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Phone</span>
+            <div id="diag-phone" style="font-weight: 500;">Phone Number</div>
+          </div>
+          <div>
+            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">GitHub</span>
+            <div id="diag-github" style="font-size: 0.85rem; word-break: break-all;">Not detected</div>
+          </div>
+          <div>
+            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">LinkedIn</span>
+            <div id="diag-linkedin" style="font-size: 0.85rem; word-break: break-all;">Not detected</div>
+          </div>
+          <div>
+            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">ATS Parsing Status</span>
+            <div style="color: var(--success); font-weight: 600;">✓ Fully Compliant</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Evidence-Based Skill Detection Card -->
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+          <div>
+            <span class="card-title">🧠 Evidence-Based Skill Detection</span>
+            <span class="card-subtitle">ResumeIQ classifies skills by where and how deeply they appear in your resume.</span>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <span class="badge badge-success"><span class="skill-dot dot-high"></span> High: <span id="ev-high-count">0</span></span>
+            <span class="badge badge-info"><span class="skill-dot dot-medium"></span> Medium: <span id="ev-med-count">0</span></span>
+            <span class="badge badge-neutral"><span class="skill-dot dot-basic"></span> Basic: <span id="ev-basic-count">0</span></span>
+          </div>
+        </div>
+
+        <div id="diag-skills-by-category"></div>
+      </div>
+
+      <!-- 8 Health Score Metrics -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📊 Granular 8-Dimension Resume Health</span>
+          <span class="card-subtitle">Comprehensive audit of content, formatting, and technical depth</span>
+        </div>
+        <div id="diag-health-metrics-list"></div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         VIEW 3: Job Match Engine
+         ==================================================================== -->
+    <div id="view-match" class="view-section">
+      <!-- Role Selection Controls -->
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+          <span class="card-title">🎯 Compare With Target Job Description</span>
+        </div>
+        <div class="grid-2">
+          <div>
+            <label style="font-size: 0.84rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.4rem; display: block;">
+              Select Benchmark Role:
+            </label>
+            <select id="match-role-select" style="width: 100%; padding: 0.6rem; background: var(--bg-card-alt); color: var(--text-primary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); font-family: inherit;">
+            </select>
+          </div>
+          <div>
+            <label style="font-size: 0.84rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.4rem; display: block;">
+              Or Paste Custom Job Description:
+            </label>
+            <div style="display: flex; gap: 0.5rem;">
+              <textarea id="custom-jd-text" class="paste-textarea" style="height: 60px;" placeholder="Paste custom JD text..."></textarea>
+              <button id="btn-match-custom-jd" class="btn btn-sm btn-primary" style="white-space: nowrap;">Match JD</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Match Score & Category Breakdown -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <span class="card-title">⚡ Multi-Factor Match Score</span>
+              <div id="match-target-role-title" style="font-size: 0.82rem; color: var(--text-muted);">Target Role</div>
+            </div>
+            <button id="btn-track-current-match" class="btn btn-sm btn-secondary">+ Add to Tracker</button>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-around; flex-wrap: wrap;">
+            <div class="score-gauge-box">
+              <svg viewBox="0 0 36 36" class="circular-chart">
+                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <path id="match-gauge-circle" class="circle green" stroke-dasharray="78, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <text x="18" y="20.35" class="percentage" id="match-overall-score">78%</text>
+              </svg>
+              <span class="gauge-caption" id="match-role-exp-needed">Experience Matched</span>
+            </div>
+
+            <div style="flex: 1; min-width: 240px;">
+              <div class="table-responsive">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Category</th>
+                      <th>Score</th>
+                      <th>Weight</th>
+                      <th>Visual</th>
+                    </tr>
+                  </thead>
+                  <tbody id="match-categories-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Explainability Card: Why this score? -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">🧠 "Why This Score?" Explainability</span>
+            <span class="badge badge-info">Transparent AI</span>
+          </div>
+
+          <div style="margin-bottom: 1rem;">
+            <h5 style="font-size: 0.85rem; color: var(--success); font-weight: 700; text-transform: uppercase; margin-bottom: 0.4rem;">
+              Key Strengths:
+            </h5>
+            <ul id="match-strengths-list" style="list-style: none; padding-left: 0;"></ul>
+          </div>
+
+          <div>
+            <h5 style="font-size: 0.85rem; color: var(--warning); font-weight: 700; text-transform: uppercase; margin-bottom: 0.4rem;">
+              Identified Gaps:
+            </h5>
+            <ul id="match-gaps-list" style="list-style: none; padding-left: 0;"></ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Matched vs Missing Skills -->
+      <div class="grid-2" style="margin-top: 1.5rem;">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title" style="color: var(--success);">✓ Matched Competencies</span>
+          </div>
+          <div id="match-matched-skills-list"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title" style="color: var(--warning);">⚠ Missing Skills & Strategic Advice</span>
+          </div>
+          <div id="match-missing-skills-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         VIEW 4: Skill Gap & Learning Roadmap
+         ==================================================================== -->
+    <div id="view-skillgap" class="view-section">
+      <div class="grid-2" style="margin-bottom: 1.5rem;">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title" style="color: var(--danger);">🚨 Critical Skill Gaps</span>
+            <span class="badge badge-danger">High Impact</span>
+          </div>
+          <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+            Missing core requirements that have the greatest influence on hiring decisions:
+          </p>
+          <div id="gap-critical-list"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title" style="color: var(--warning);">⚡ Important Secondary Gaps</span>
+            <span class="badge badge-warning">Differentiator</span>
+          </div>
+          <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+            Preferred tools that separate top candidates from the general applicant pool:
+          </p>
+          <div id="gap-important-list"></div>
+        </div>
+      </div>
+
+      <!-- Suggested Learning Path Steps -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <span class="card-title">🗺 Suggested Career Learning Roadmap</span>
+            <span class="card-subtitle">Turn skill gaps into a structured, step-by-step career development plan.</span>
+          </div>
+        </div>
+
+        <div id="gap-roadmap-container" style="margin-top: 1rem;"></div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         VIEW 5: Section Diagnostics & Risk Detector
+         ==================================================================== -->
+    <div id="view-sections" class="view-section">
+      <div class="grid-2">
+        <div>
+          <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem;">
+            🔍 Section-by-Section Audit
+          </h3>
+          <div id="section-diagnostics-container"></div>
+        </div>
+
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="font-size: 1.15rem; font-weight: 700;">🚨 Resume Risk Detector</h3>
+            <span id="risk-count-badge" class="badge badge-warning">0 Issues Detected</span>
+          </div>
+          <div id="risk-detector-container"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         VIEW 6: Resume Improvement Assistant (Sentence Rewriter)
+         ==================================================================== -->
+    <div id="view-assistant" class="view-section">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <span class="card-title">✍️ Resume Improvement Assistant</span>
+            <span class="card-subtitle">
+              Don't guess what recruiters want. Rewrite weak bullet points using the proven formula:
+              <strong>Action Verb + Technology + Problem + Quantifiable Result</strong>
+            </span>
+          </div>
+        </div>
+
+        <div style="margin-top: 1rem;">
+          <label style="font-size: 0.84rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.4rem; display: block;">
+            Select from your extracted resume bullets:
+          </label>
+          <select id="rewriter-preset-select" style="width: 100%; padding: 0.6rem; background: var(--bg-card-alt); color: var(--text-primary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); font-family: inherit; margin-bottom: 1rem;">
+          </select>
+
+          <label style="font-size: 0.84rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.4rem; display: block;">
+            Or enter any bullet point to transform:
+          </label>
+          <textarea id="input-bullet-rewrite" class="paste-textarea" style="height: 80px;" placeholder="e.g. Developed a machine learning project using Python."></textarea>
+
+          <div style="margin-top: 0.75rem; display: flex; justify-content: flex-end;">
+            <button id="btn-rewrite-bullet" class="btn btn-primary">✨ Improve Sentence</button>
+          </div>
+        </div>
+
+        <div id="rewriter-results-container" class="rewriter-box">
+          <p style="color: var(--text-muted); font-size: 0.88rem;">
+            Select or enter a bullet point above and click "Improve Sentence" to generate 3 tailored variations.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         VIEW 7: Multi-Job Comparison
+         ==================================================================== -->
+    <div id="view-multijob" class="view-section">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <span class="card-title">🔄 Multi-Job Alignment Matrix</span>
+            <span class="card-subtitle">
+              See how your single resume ranks across 6 high-demand technical careers simultaneously.
+            </span>
+          </div>
+          <button class="btn btn-sm btn-secondary" onclick="runMultiJobComparison()">↻ Re-evaluate</button>
+        </div>
+
+        <div class="table-responsive" style="margin-top: 1rem;">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Target Role</th>
+                <th>Overall Match</th>
+                <th>Tech Skills</th>
+                <th>Matched</th>
+                <th>Skill Deficits</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="multijob-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         VIEW 8: Resume Evolution (v1 vs v2)
+         ==================================================================== -->
+    <div id="view-evolution" class="view-section">
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+          <div>
+            <span class="card-title">📈 Resume Evolution Tracker</span>
+            <span class="card-subtitle">
+              Track how your resume health and ATS pass rates improve version over version.
+            </span>
+          </div>
+        </div>
+
+        <div id="evolution-comparison-container" style="margin-top: 1rem;"></div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         VIEW 9: Job Application Tracker
+         ==================================================================== -->
+    <div id="view-tracker" class="view-section">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <span class="card-title">💼 Career Application Tracker</span>
+            <span class="card-subtitle">Manage companies, roles, resume versions used, and current interview pipeline status.</span>
+          </div>
+          <button class="btn btn-sm btn-primary" onclick="trackCurrentMatch()">+ Add Current Role</button>
+        </div>
+
+        <div class="table-responsive" style="margin-top: 1rem;">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Company</th>
+                <th>Role</th>
+                <th>Match Score</th>
+                <th>Version</th>
+                <th>Status</th>
+                <th>Date Added</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="applications-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         VIEW 10: PDF Report Generation
+         ==================================================================== -->
+    <div id="view-report" class="view-section">
+      <div class="card" style="text-align: center; padding: 3rem 1.5rem;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">📑</div>
+        <h2 style="font-size: 1.6rem; font-weight: 700; margin-bottom: 0.5rem;">
+          Generate Executive Analysis Report
+        </h2>
+        <p style="font-size: 0.9rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto 1.8rem auto;">
+          Export a comprehensive, publication-quality PDF containing your resume health scorecard,
+          evidence-based skill matrix, match diagnostic breakdown, and step-by-step career development roadmap.
+        </p>
+
+        <div style="display: inline-flex; gap: 1rem; align-items: center;">
+          <button id="btn-download-pdf-report" class="btn btn-primary" style="padding: 0.75rem 1.75rem; font-size: 1rem;">
+            📥 Download Executive PDF Report
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ========================================================================
+       Footer
+       ======================================================================== -->
+  <footer class="footer">
+    <p>
+      <strong>ResumeIQ</strong> &bull; Professional AI Career Intelligence Platform &bull;
+      Evidence-based parsing, explainable matching, and actionable career advancement.
+    </p>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

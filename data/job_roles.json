@@ -1,0 +1,68 @@
+[
+  {
+    "id": "swe_fullstack",
+    "title": "Software Engineer (Full Stack)",
+    "company": "Stripe / Tech Corp",
+    "level": "Mid-Level (2-4 Years)",
+    "required_skills": ["Python", "JavaScript", "React", "PostgreSQL", "REST API", "Git"],
+    "preferred_skills": ["Docker", "AWS", "TypeScript", "CI/CD", "Redis"],
+    "min_experience_years": 2,
+    "education": "Bachelor's degree in Computer Science, Software Engineering or related field",
+    "description": "We are seeking a talented Full Stack Software Engineer to build scalable microservices and intuitive user interfaces. You will design reliable REST APIs, craft responsive React components, and maintain high code quality with automated unit testing."
+  },
+  {
+    "id": "backend_developer",
+    "title": "Backend Systems Engineer",
+    "company": "Fintech Solutions",
+    "level": "Mid to Senior (3+ Years)",
+    "required_skills": ["Python", "Java", "SQL", "PostgreSQL", "REST API", "Docker", "Git"],
+    "preferred_skills": ["Kubernetes", "AWS", "Redis", "Microservices", "System Design"],
+    "min_experience_years": 3,
+    "education": "B.S. in Computer Science or equivalent practical experience",
+    "description": "Join our core infrastructure team to build secure, fault-tolerant financial transaction systems. You will optimize database queries, implement caching layers using Redis, and deploy containerized services onto cloud environments."
+  },
+  {
+    "id": "data_analyst",
+    "title": "Data Analyst / Analytics Engineer",
+    "company": "E-Commerce Insights",
+    "level": "Entry to Mid (1-3 Years)",
+    "required_skills": ["Python", "SQL", "Pandas", "NumPy", "Git"],
+    "preferred_skills": ["AWS", "Docker", "PostgreSQL", "Scikit-Learn"],
+    "min_experience_years": 1,
+    "education": "Bachelor's in CS, Mathematics, Statistics, Data Science, or related quantitative field",
+    "description": "We are looking for an analytical thinker who can turn complex datasets into actionable business strategies. You will write complex SQL queries, build data cleaning pipelines in Python/Pandas, and collaborate with product teams."
+  },
+  {
+    "id": "ml_engineer",
+    "title": "Machine Learning Engineer",
+    "company": "Cognitive AI Labs",
+    "level": "Mid-Level (2-5 Years)",
+    "required_skills": ["Python", "PyTorch", "TensorFlow", "Scikit-Learn", "NumPy", "Git", "REST API"],
+    "preferred_skills": ["Docker", "Kubernetes", "AWS", "FastAPI", "CI/CD"],
+    "min_experience_years": 2,
+    "education": "Degree in Computer Science, Artificial Intelligence, or STEM discipline",
+    "description": "Develop and deploy state-of-the-art predictive models into production. Responsibilities include data preprocessing, model training and evaluation, serving models via FastAPI/REST endpoints, and containerizing ML inference pipelines."
+  },
+  {
+    "id": "frontend_dev",
+    "title": "Frontend Engineer (React/TypeScript)",
+    "company": "Design Systems Inc",
+    "level": "Mid-Level (2+ Years)",
+    "required_skills": ["JavaScript", "TypeScript", "React", "HTML5", "CSS3", "Git"],
+    "preferred_skills": ["Next.js", "Tailwind CSS", "REST API", "Unit Testing", "CI/CD"],
+    "min_experience_years": 2,
+    "education": "Bachelor's in Computer Science, Web Development, or equivalent portfolio",
+    "description": "Create pixel-perfect, accessible, and high-performance web applications using modern React, TypeScript, and responsive CSS frameworks. Collaborate closely with product designers and backend engineers."
+  },
+  {
+    "id": "devops_cloud",
+    "title": "DevOps & Cloud Engineer",
+    "company": "CloudScale Platforms",
+    "level": "Mid to Senior (3+ Years)",
+    "required_skills": ["Linux", "Docker", "Kubernetes", "AWS", "CI/CD", "Git", "Python"],
+    "preferred_skills": ["Terraform", "Nginx", "PostgreSQL", "Redis", "Microservices"],
+    "min_experience_years": 3,
+    "education": "Degree in Computer Science, Systems Engineering, or equivalent experience",
+    "description": "Architect and maintain our multi-region cloud infrastructure on AWS. Automate continuous integration and continuous delivery (CI/CD) pipelines, orchestrate Kubernetes clusters, and guarantee 99.99% system availability."
+  }
+]

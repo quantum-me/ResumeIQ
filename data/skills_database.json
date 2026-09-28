@@ -1,0 +1,113 @@
+{
+  "categories": {
+    "Programming Languages": [
+      {"name": "Python", "aliases": ["python3", "python 3", "py"], "domain": "Backend/Data/AI"},
+      {"name": "JavaScript", "aliases": ["js", "es6", "ecmascript"], "domain": "Web"},
+      {"name": "TypeScript", "aliases": ["ts"], "domain": "Web"},
+      {"name": "Java", "aliases": ["core java", "j2se", "j2ee"], "domain": "Backend"},
+      {"name": "C++", "aliases": ["cpp", "c plus plus"], "domain": "Systems"},
+      {"name": "C#", "aliases": ["csharp", "c sharp", ".net"], "domain": "Backend"},
+      {"name": "Go", "aliases": ["golang"], "domain": "Backend/Cloud"},
+      {"name": "Rust", "aliases": ["rustlang"], "domain": "Systems"},
+      {"name": "Ruby", "aliases": ["ruby on rails"], "domain": "Web"},
+      {"name": "PHP", "aliases": ["php7", "php8"], "domain": "Web"},
+      {"name": "SQL", "aliases": ["structured query language", "t-sql", "pl/sql"], "domain": "Data"},
+      {"name": "HTML5", "aliases": ["html"], "domain": "Frontend"},
+      {"name": "CSS3", "aliases": ["css", "sass", "scss", "tailwind"], "domain": "Frontend"}
+    ],
+    "Frameworks & Libraries": [
+      {"name": "React", "aliases": ["react.js", "reactjs"], "domain": "Frontend"},
+      {"name": "Next.js", "aliases": ["nextjs"], "domain": "Frontend"},
+      {"name": "Node.js", "aliases": ["nodejs", "node"], "domain": "Backend"},
+      {"name": "Express", "aliases": ["express.js", "expressjs"], "domain": "Backend"},
+      {"name": "Django", "aliases": ["django rest framework", "drf"], "domain": "Backend"},
+      {"name": "Flask", "aliases": ["flask web framework"], "domain": "Backend"},
+      {"name": "FastAPI", "aliases": ["fast-api"], "domain": "Backend"},
+      {"name": "Spring Boot", "aliases": ["spring", "springboot", "spring mvc"], "domain": "Backend"},
+      {"name": "Vue.js", "aliases": ["vue", "vuejs", "nuxt"], "domain": "Frontend"},
+      {"name": "Angular", "aliases": ["angularjs", "angular 2+"], "domain": "Frontend"},
+      {"name": "Tailwind CSS", "aliases": ["tailwind", "tailwindcss"], "domain": "Frontend"},
+      {"name": "Bootstrap", "aliases": ["bootstrap 5", "bootstrap4"], "domain": "Frontend"},
+      {"name": "PyTorch", "aliases": ["torch"], "domain": "AI/ML"},
+      {"name": "TensorFlow", "aliases": ["tf", "keras"], "domain": "AI/ML"},
+      {"name": "Scikit-Learn", "aliases": ["sklearn", "scikit learn"], "domain": "AI/ML"},
+      {"name": "Pandas", "aliases": ["pd"], "domain": "Data"},
+      {"name": "NumPy", "aliases": ["np"], "domain": "Data"},
+      {"name": "GraphQL", "aliases": ["apollo graphql"], "domain": "API"}
+    ],
+    "Cloud & DevOps": [
+      {"name": "AWS", "aliases": ["amazon web services", "ec2", "s3", "lambda", "rds", "cloudformation"], "domain": "Cloud"},
+      {"name": "Docker", "aliases": ["containerization", "docker compose", "dockerfile"], "domain": "DevOps"},
+      {"name": "Kubernetes", "aliases": ["k8s", "kubectl", "helm"], "domain": "DevOps"},
+      {"name": "CI/CD", "aliases": ["github actions", "gitlab ci", "jenkins", "travis"], "domain": "DevOps"},
+      {"name": "Git", "aliases": ["github", "gitlab", "version control", "bitbucket"], "domain": "Tools"},
+      {"name": "Azure", "aliases": ["microsoft azure", "azure devops"], "domain": "Cloud"},
+      {"name": "GCP", "aliases": ["google cloud", "google cloud platform", "bigquery"], "domain": "Cloud"},
+      {"name": "Linux", "aliases": ["ubuntu", "bash", "unix", "shell scripting"], "domain": "Systems"},
+      {"name": "Terraform", "aliases": ["iac", "infrastructure as code"], "domain": "DevOps"},
+      {"name": "Nginx", "aliases": ["reverse proxy"], "domain": "DevOps"}
+    ],
+    "Databases & Storage": [
+      {"name": "PostgreSQL", "aliases": ["postgres", "psql"], "domain": "Database"},
+      {"name": "MySQL", "aliases": ["mariadb"], "domain": "Database"},
+      {"name": "MongoDB", "aliases": ["mongo", "nosql"], "domain": "Database"},
+      {"name": "Redis", "aliases": ["caching", "in-memory"], "domain": "Database"},
+      {"name": "Elasticsearch", "aliases": ["elastic", "elk"], "domain": "Database"},
+      {"name": "SQLite", "aliases": ["sqlite3"], "domain": "Database"},
+      {"name": "Firebase", "aliases": ["firestore"], "domain": "Database"},
+      {"name": "DynamoDB", "aliases": ["aws dynamodb"], "domain": "Database"}
+    ],
+    "Architecture & Concepts": [
+      {"name": "REST API", "aliases": ["restful api", "rest", "restful apis", "rest apis", "web services"], "domain": "API"},
+      {"name": "Microservices", "aliases": ["microservice architecture", "distributed systems"], "domain": "Architecture"},
+      {"name": "Agile/Scrum", "aliases": ["scrum", "sprint planning", "kanban", "jira"], "domain": "Management"},
+      {"name": "Unit Testing", "aliases": ["pytest", "jest", "junit", "tdd", "test driven development"], "domain": "Quality"},
+      {"name": "Data Structures & Algorithms", "aliases": ["dsa", "algorithms", "data structures"], "domain": "Fundamentals"},
+      {"name": "Object-Oriented Programming", "aliases": ["oop", "oops", "object oriented"], "domain": "Fundamentals"},
+      {"name": "System Design", "aliases": ["scalability", "high availability", "load balancing"], "domain": "Architecture"}
+    ]
+  },
+  "skill_advice": {
+    "Docker": "Frequently required for containerized microservices and standardizing deployment environments. Consider building and containerizing a multi-tier project with Docker Compose.",
+    "AWS": "High-priority cloud platform in enterprise hiring. Recommended to highlight hands-on experience with S3, EC2, Lambda, or get familiar with AWS Free Tier.",
+    "Kubernetes": "Valuable for orchestrating distributed systems at scale. Consider trying minikube or containerizing a sample application with Kubernetes manifests.",
+    "CI/CD": "Modern engineering teams expect automated testing and deployment. Add a simple GitHub Actions workflow (.github/workflows/ci.yml) to your projects.",
+    "TypeScript": "Rapidly becoming standard for frontend and full-stack roles due to type safety. Refactoring an existing JavaScript project to TypeScript is a great portfolio item.",
+    "REST API": "The foundational communication layer between web clients and backends. Make sure your project descriptions highlight CRUD endpoints, authentication, and HTTP status codes.",
+    "PostgreSQL": "The industry standard relational database for high-integrity transactional apps. Highlight schema design, indexing, or relational querying in your resume.",
+    "Redis": "Frequently used for caching, rate limiting, and pub/sub. Adding Redis caching to a backend project boosts engineering credibility.",
+    "GraphQL": "Alternative to REST favored for complex multi-resource client queries. Consider learning Apollo Client/Server to stand out."
+  },
+  "learning_paths": {
+    "Docker": [
+      {"step": "Docker Basics", "desc": "Understand images, containers, and Dockerfile commands (FROM, RUN, CMD)", "time": "4-6 hours"},
+      {"step": "Multi-container Compose", "desc": "Connect a web app (Flask/Node) with a database (PostgreSQL/Redis) using docker-compose.yml", "time": "6-8 hours"},
+      {"step": "Container Optimization", "desc": "Learn multi-stage builds and minimal base images (alpine/distroless)", "time": "4 hours"}
+    ],
+    "AWS": [
+      {"step": "Core Services", "desc": "Set up S3 static storage, EC2 Linux instance, and IAM security permissions", "time": "8 hours"},
+      {"step": "Serverless Functions", "desc": "Build an AWS Lambda function triggered by API Gateway", "time": "6 hours"},
+      {"step": "Cloud Deployment", "desc": "Deploy a containerized application to AWS ECS or Elastic Beanstalk", "time": "10 hours"}
+    ],
+    "Kubernetes": [
+      {"step": "K8s Architecture", "desc": "Learn Pods, Deployments, Services, and Namespaces using Minikube or Kind", "time": "8 hours"},
+      {"step": "Config & Storage", "desc": "Manage ConfigMaps, Secrets, and Persistent Volumes", "time": "6 hours"},
+      {"step": "Helm & Ingress", "desc": "Package applications with Helm charts and expose via Ingress controller", "time": "8 hours"}
+    ],
+    "CI/CD": [
+      {"step": "Automated Lint & Test", "desc": "Create a GitHub Actions workflow that runs linter and unit tests on pull request", "time": "3 hours"},
+      {"step": "Docker Build & Push", "desc": "Automate Docker image creation and pushing to Docker Hub or GitHub Container Registry", "time": "4 hours"},
+      {"step": "Automated Deployment", "desc": "Deploy automatically to a cloud host on main branch merge", "time": "5 hours"}
+    ],
+    "TypeScript": [
+      {"step": "Type Fundamentals", "desc": "Primitive types, Interfaces, Type Aliases, and Union types", "time": "5 hours"},
+      {"step": "Generics & Utility Types", "desc": "Master Pick, Omit, Partial, and generic functions/classes", "time": "6 hours"},
+      {"step": "Fullstack Integration", "desc": "Build a React + Node project with shared TypeScript schemas", "time": "10 hours"}
+    ],
+    "REST API": [
+      {"step": "HTTP & REST Principles", "desc": "Status codes, idempotent methods (GET, PUT, DELETE, POST), URL conventions", "time": "3 hours"},
+      {"step": "Auth & Validation", "desc": "JWT token authentication, input validation, and secure password hashing", "time": "5 hours"},
+      {"step": "Documentation & Testing", "desc": "Document with OpenAPI/Swagger and write comprehensive integration tests", "time": "5 hours"}
+    ]
+  }
+}
