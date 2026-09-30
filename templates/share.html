@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resume Analysis &mdash; {{ version.version_number }} &bull; ResumeIQ</title>
+  <meta name="description" content="Verified ResumeIQ Career Intelligence Report & Match Diagnostic">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+</head>
+<body style="min-height: 100vh; display: flex; flex-direction: column;">
+
+  <!-- Header -->
+  <header class="header-nav">
+    <div class="nav-container">
+      <div class="brand-wrapper" onclick="window.location.href='/'">
+        <div class="brand-icon">IQ</div>
+        <div class="brand-info">
+          <span class="brand-title">ResumeIQ</span>
+          <span class="brand-tagline">Verified Career Intelligence &bull; Public Share</span>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <button id="theme-toggle-btn" class="btn-icon-only" onclick="toggleTheme()" title="Toggle Dark/Light Mode">☀️</button>
+        <a href="/" class="btn btn-sm btn-primary">Try ResumeIQ →</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-wrapper" style="max-width: 960px; margin: 2rem auto; padding: 0 1.5rem 4rem 1.5rem;">
+
+    {% if is_revoked or is_private %}
+    <!-- Access Restricted State -->
+    <div class="card" style="text-align: center; padding: 4rem 2rem;">
+      <div style="font-size: 3rem; margin-bottom: 1rem; color: var(--warning);">🔒</div>
+      <h2 style="font-size: 1.6rem; font-weight: 700; margin-bottom: 0.6rem;">This Analysis is Private</h2>
+      <p style="font-size: 0.92rem; color: var(--text-secondary); max-width: 520px; margin: 0 auto 1.8rem auto;">
+        The owner has set this resume version to <strong>Private</strong> or revoked this share link.
+        Access is currently restricted.
+      </p>
+      <a href="/" class="btn btn-secondary">Analyze Your Own Resume with ResumeIQ</a>
+    </div>
+
+    {% else %}
+    <!-- Public Verified Analysis Card -->
+    <div class="card" style="margin-bottom: 1.5rem; position: relative; overflow: hidden;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+        <div>
+          <div style="display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <span class="badge badge-success">✓ Verified Analysis</span>
+            <span class="badge badge-neutral">{{ version.version_number }}</span>
+          </div>
+          <h1 style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text-primary); margin-bottom: 0.25rem;">
+            Resume Analysis &mdash; {{ version.version_number }}
+          </h1>
+          <p style="font-size: 0.95rem; color: var(--text-secondary);">
+            Target Role: <strong style="color: var(--text-primary);">{{ version.target_role }}</strong> &bull; Analyzed on {{ version.date_display }}
+          </p>
+        </div>
+
+        {% if version.pdf_report_url %}
+        <a href="{{ version.pdf_report_url }}" class="btn btn-primary btn-sm" download>
+          📥 Download Report
+        </a>
+        {% endif %}
+      </div>
+
+      <!-- Privacy Protection Banner -->
+      <div style="background: var(--bg-card-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 0.82rem; color: var(--text-muted);">
+        <span>🛡️ <strong>Privacy Protected:</strong> Personal contact info (phone/email) is hidden by owner preference.</span>
+        {% if version.allow_contact_info and version.contact.email %}
+        <span style="color: var(--text-primary);">Contact: {{ version.contact.email }}</span>
+        {% endif %}
+      </div>
+
+      <!-- Core Scores Row -->
+      <div class="grid-2" style="margin-bottom: 1.5rem;">
+        <!-- Health Score -->
+        <div style="background: var(--bg-card-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.5rem; text-align: center;">
+          <span style="font-size: 0.82rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">
+            Resume Health
+          </span>
+          <div style="font-size: 2.8rem; font-weight: 800; color: var(--accent-primary); line-height: 1.1; margin: 0.5rem 0 0.2rem 0;">
+            {{ version.health_score }} <span style="font-size: 1.2rem; color: var(--text-muted); font-weight: 500;">/ 100</span>
+          </div>
+          <span class="badge badge-success" style="font-size: 0.78rem;">ATS Optimized</span>
+        </div>
+
+        <!-- Job Match Score -->
+        <div style="background: var(--bg-card-alt); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.5rem; text-align: center;">
+          <span style="font-size: 0.82rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">
+            Job Match Alignment
+          </span>
+          <div style="font-size: 2.8rem; font-weight: 800; color: var(--success); line-height: 1.1; margin: 0.5rem 0 0.2rem 0;">
+            {{ version.match_score }}%
+          </div>
+          <span class="badge badge-info" style="font-size: 0.78rem;">{{ version.target_role }}</span>
+        </div>
+      </div>
+
+      <!-- Matched Skills -->
+      <div style="margin-bottom: 1.8rem;">
+        <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+          <span style="color: var(--success);">✓</span> Matched Skills ({{ version.matched_skills|length }})
+        </h3>
+        <div class="skill-pills">
+          {% for skill in version.matched_skills %}
+          <div class="skill-tag" style="border-color: rgba(16, 185, 129, 0.25);">
+            <span class="skill-dot dot-high"></span>
+            <strong>{{ skill }}</strong>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Skill Gaps -->
+      <div style="margin-bottom: 1.8rem;">
+        <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+          <span style="color: var(--warning);">⚠</span> Skill Gaps & Development Areas ({{ version.skill_gaps|length }})
+        </h3>
+        <div class="skill-pills">
+          {% for gap in version.skill_gaps %}
+          <div class="skill-tag" style="border-color: rgba(245, 158, 11, 0.3); background: var(--warning-bg);">
+            <span class="skill-dot" style="background: var(--warning);"></span>
+            <strong style="color: var(--warning);">{{ gap }}</strong>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Key Recommendations -->
+      <div style="margin-bottom: 2rem;">
+        <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-primary);">
+          💡 Key Recommendations
+        </h3>
+        <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+          {% for rec in version.key_recommendations %}
+          <div style="background: var(--bg-card-alt); border-left: 3px solid var(--accent-primary); border-radius: var(--radius-sm); padding: 0.8rem 1rem; font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5;">
+            {{ rec }}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div style="border-top: 1px solid var(--border-subtle); padding-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <button id="btn-toggle-details" class="btn btn-secondary" onclick="toggleDetails()">
+          View Full Breakdown ↓
+        </button>
+
+        <div style="display: flex; gap: 0.75rem;">
+          {% if version.pdf_report_url %}
+          <a href="{{ version.pdf_report_url }}" class="btn btn-primary" download>
+            Download Full PDF Report
+          </a>
+          {% endif %}
+          <a href="/" class="btn btn-secondary">
+            Analyze Your Resume
+          </a>
+        </div>
+      </div>
+
+      <!-- Expandable Full Analysis Details -->
+      <div id="full-analysis-details" style="display: none; margin-top: 1.5rem; border-top: 1px dashed var(--border-subtle); padding-top: 1.5rem;">
+        <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--accent-primary);">
+          Diagnostic Summary & Revision Notes:
+        </h4>
+        <p style="font-size: 0.86rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem;">
+          {{ version.changes_summary }}
+        </p>
+        <div class="grid-2">
+          <div style="background: var(--bg-card-alt); padding: 0.85rem; border-radius: var(--radius-md);">
+            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Total Skills Detected</span>
+            <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{{ version.skills_count }}</div>
+          </div>
+          <div style="background: var(--bg-card-alt); padding: 0.85rem; border-radius: var(--radius-md);">
+            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Measurable Achievement Bullets</span>
+            <div style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">{{ version.measurable_bullets_count }}</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    {% endif %}
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer" style="margin-top: auto;">
+    <p>
+      <strong>ResumeIQ</strong> &bull; Verified AI Career Intelligence Engine &bull;
+      <a href="/" style="color: var(--accent-primary);">Create your own analysis</a>
+    </p>
+  </footer>
+
+  <script>
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      document.getElementById('theme-toggle-btn').innerHTML = next === 'dark' ? '☀️' : '🌙';
+    }
+
+    function toggleDetails() {
+      const el = document.getElementById('full-analysis-details');
+      const btn = document.getElementById('btn-toggle-details');
+      if (el.style.display === 'none') {
+        el.style.display = 'block';
+        btn.innerHTML = 'Hide Full Breakdown ↑';
+      } else {
+        el.style.display = 'none';
+        btn.innerHTML = 'View Full Breakdown ↓';
+      }
+    }
+  </script>
+</body>
+</html>

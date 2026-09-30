@@ -31,9 +31,9 @@
         <button class="nav-tab" data-tab="sections">🔍 Diagnostics & Risks</button>
         <button class="nav-tab" data-tab="assistant">✍️ Bullet Rewriter</button>
         <button class="nav-tab" data-tab="multijob">🔄 Multi-Job</button>
-        <button class="nav-tab" data-tab="evolution">📈 Evolution</button>
+        <button class="nav-tab" data-tab="evolution">📈 Versions & Diff</button>
         <button class="nav-tab" data-tab="tracker">💼 Tracker</button>
-        <button class="nav-tab" data-tab="report">📑 PDF Report</button>
+        <button class="nav-tab" data-tab="report">📑 Share QR & PDF</button>
       </nav>
 
       <div class="nav-actions">
@@ -208,9 +208,10 @@
               <span id="dash-missing-count-text" style="color: var(--warning); font-weight: 600;">⚠ 4 skills missing</span>
             </div>
 
-            <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+            <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;">
               <button class="btn btn-sm btn-primary" onclick="switchTab('match')">View Analysis →</button>
               <button class="btn btn-sm btn-secondary" onclick="switchTab('skillgap')">View Skill Gap →</button>
+              <button class="btn btn-sm btn-secondary" style="border-color: var(--accent-primary); color: var(--accent-primary);" onclick="switchTab('report')">⚡ Share QR →</button>
             </div>
           </div>
         </div>
@@ -556,20 +557,65 @@
     </div>
 
     <!-- ====================================================================
-         VIEW 8: Resume Evolution (v1 vs v2)
+         VIEW 8: Resume Version Evolution & Factual Diff Tracker
          ==================================================================== -->
     <div id="view-evolution" class="view-section">
+      <!-- Section 1: Version History Table -->
       <div class="card" style="margin-bottom: 1.5rem;">
         <div class="card-header">
           <div>
-            <span class="card-title">📈 Resume Evolution Tracker</span>
+            <span class="card-title">📈 Resume Version History</span>
             <span class="card-subtitle">
-              Track how your resume health and ATS pass rates improve version over version.
+              Audit and track each resume revision over time with score trends, share status, and instant QR generation.
             </span>
+          </div>
+          <button class="btn btn-sm btn-primary" onclick="saveCurrentAsNewVersion()">+ Save Current as New Version</button>
+        </div>
+
+        <div class="table-responsive" style="margin-top: 1rem;">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Version</th>
+                <th>Analysis Date</th>
+                <th>Health Score</th>
+                <th>Job Match</th>
+                <th>Share Status</th>
+                <th>Major Changes & Improvements</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="version-history-table-body">
+              <tr>
+                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Loading version history...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section 2: "What Changed?" Diff Engine -->
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+          <div>
+            <span class="card-title">🔍 "What Changed?" Factual Diff Engine</span>
+            <span class="card-subtitle">
+              Strictly fact-based comparison between revisions &mdash; reveals newly detected skills, metric additions, and remaining deficits.
+            </span>
+          </div>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <select id="diff-version-old-select" style="background: var(--bg-card-alt); color: var(--text-primary); border: 1px solid var(--border-subtle); padding: 0.35rem 0.6rem; border-radius: var(--radius-sm); font-size: 0.8rem;"></select>
+            <span style="color: var(--text-muted); font-size: 0.8rem;">vs</span>
+            <select id="diff-version-new-select" style="background: var(--bg-card-alt); color: var(--text-primary); border: 1px solid var(--border-subtle); padding: 0.35rem 0.6rem; border-radius: var(--radius-sm); font-size: 0.8rem;"></select>
+            <button class="btn btn-sm btn-secondary" onclick="triggerVersionsDiff()">Compare</button>
           </div>
         </div>
 
-        <div id="evolution-comparison-container" style="margin-top: 1rem;"></div>
+        <div id="what-changed-diff-container" style="margin-top: 1rem;">
+          <p style="color: var(--text-muted); font-size: 0.88rem; text-align: center; padding: 1rem;">
+            Select two versions above to compute the factual diff.
+          </p>
+        </div>
       </div>
     </div>
 
@@ -606,23 +652,154 @@
     </div>
 
     <!-- ====================================================================
-         VIEW 10: PDF Report Generation
+         VIEW 10: PDF Report & QR Version Sharing
          ==================================================================== -->
     <div id="view-report" class="view-section">
-      <div class="card" style="text-align: center; padding: 3rem 1.5rem;">
-        <div style="font-size: 3rem; margin-bottom: 1rem;">📑</div>
-        <h2 style="font-size: 1.6rem; font-weight: 700; margin-bottom: 0.5rem;">
-          Generate Executive Analysis Report
+      <!-- PDF Generation Card -->
+      <div class="card" style="text-align: center; padding: 2.5rem 1.5rem; margin-bottom: 1.5rem;">
+        <div style="font-size: 2.8rem; margin-bottom: 0.8rem;">📑</div>
+        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.4rem;">
+          Executive Analysis Report
         </h2>
-        <p style="font-size: 0.9rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto 1.8rem auto;">
+        <p style="font-size: 0.9rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto 1.5rem auto;">
           Export a comprehensive, publication-quality PDF containing your resume health scorecard,
           evidence-based skill matrix, match diagnostic breakdown, and step-by-step career development roadmap.
         </p>
 
-        <div style="display: inline-flex; gap: 1rem; align-items: center;">
-          <button id="btn-download-pdf-report" class="btn btn-primary" style="padding: 0.75rem 1.75rem; font-size: 1rem;">
+        <div style="display: inline-flex; gap: 1rem; align-items: center; justify-content: center; flex-wrap: wrap;">
+          <button id="btn-download-pdf-report" class="btn btn-primary" style="padding: 0.7rem 1.6rem; font-size: 0.95rem;">
             📥 Download Executive PDF Report
           </button>
+        </div>
+      </div>
+
+      <!-- QR-Based Resume Version & Sharing Card -->
+      <div class="card qr-section-card" id="qr-section-container">
+        <div class="card-header" style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+              <span class="badge badge-info" id="qr-header-version-badge">Version 02</span>
+              <span class="badge badge-success" id="qr-status-badge">✓ Shareable</span>
+            </div>
+            <h3 style="font-size: 1.35rem; font-weight: 800; color: var(--text-primary); margin: 0;">
+              ResumeIQ &bull; Share Your Analysis
+            </h3>
+            <span class="card-subtitle" style="margin-top: 0.2rem;">
+              Share a read-only, privacy-protected verified snapshot of your resume health and skill alignment via QR code.
+            </span>
+          </div>
+
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <button id="btn-generate-share-qr" class="btn btn-primary btn-sm" onclick="generateShareQr()">
+              ⚡ Generate Share QR
+            </button>
+          </div>
+        </div>
+
+        <!-- Elegant QR Card Container -->
+        <div id="elegant-qr-card" class="qr-card">
+          <div class="qr-grid">
+            <!-- Left: QR Code Frame -->
+            <div class="qr-preview-pane">
+              <div class="qr-frame">
+                <img id="qr-image-display" src="" alt="ResumeIQ Share QR Code" class="qr-image" />
+              </div>
+              <p class="qr-scan-text">Scan to view this resume analysis</p>
+              <div style="font-size: 0.72rem; color: var(--text-muted); text-align: center; margin-top: 0.4rem;">
+                Secure link &bull; Read-only snapshot
+              </div>
+            </div>
+
+            <!-- Right: Metadata, Scores & Actions -->
+            <div class="qr-content-pane">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+                <div>
+                  <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">Target Role Evaluation</div>
+                  <h4 id="qr-target-role-title" style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary); margin: 0.2rem 0;">
+                    Software Engineer (Full Stack)
+                  </h4>
+                  <div id="qr-analysis-date-text" style="font-size: 0.82rem; color: var(--text-secondary);">
+                    📅 Analyzed on September 28, 2026
+                  </div>
+                </div>
+                <div id="qr-version-indicator" class="badge badge-neutral" style="font-size: 0.85rem; padding: 0.35rem 0.75rem;">
+                  Version 02
+                </div>
+              </div>
+
+              <!-- Score Summary Badges -->
+              <div class="grid-2" style="margin-bottom: 1.25rem;">
+                <div class="qr-score-box">
+                  <span class="qr-score-label">Resume Health Score</span>
+                  <div class="qr-score-value" id="qr-health-score-val" style="color: var(--accent-primary);">87</div>
+                  <span class="badge badge-success" style="font-size: 0.72rem;">ATS Passed</span>
+                </div>
+                <div class="qr-score-box">
+                  <span class="qr-score-label">Job Match Score</span>
+                  <div class="qr-score-value" id="qr-match-score-val" style="color: var(--success);">82%</div>
+                  <span class="badge badge-info" style="font-size: 0.72rem;">High Fit</span>
+                </div>
+              </div>
+
+              <!-- Share URL Box -->
+              <div class="qr-link-box" style="margin-bottom: 1.25rem;">
+                <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.3rem; display: block;">
+                  Public Share Link:
+                </label>
+                <div style="display: flex; gap: 0.5rem;">
+                  <input type="text" id="qr-share-url-input" readonly value="" class="paste-textarea" style="height: 38px; padding: 0.4rem 0.75rem; font-size: 0.82rem; resize: none; overflow: hidden; white-space: nowrap; flex: 1;" />
+                  <button class="btn btn-secondary btn-sm" id="btn-copy-link" onclick="copyShareLink()">
+                    📋 Copy
+                  </button>
+                </div>
+              </div>
+
+              <!-- Primary Action Buttons -->
+              <div class="qr-actions-row">
+                <button class="btn btn-primary btn-sm" onclick="copyShareLink()">
+                  📋 Copy Link
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="downloadQrPng()">
+                  ⬇ Download QR (PNG)
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="shareViaWebApi()">
+                  🔗 Share
+                </button>
+                <a id="qr-open-public-link" href="#" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration: none;">
+                  ↗ Open Share Page
+                </a>
+              </div>
+
+              <!-- Privacy & Revocation Controls Strip -->
+              <div class="qr-privacy-panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+                  <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-primary);">
+                    🔒 Privacy & Access Controls:
+                  </span>
+                  <span id="qr-privacy-status-text" style="font-size: 0.8rem; color: var(--success);">
+                    Status: Publicly Shareable
+                  </span>
+                </div>
+
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+                  <button id="btn-toggle-privacy" class="btn btn-sm btn-secondary" onclick="toggleCurrentPrivacy()">
+                    🔒 Make Private
+                  </button>
+                  <button id="btn-revoke-access" class="btn btn-sm" style="background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border);" onclick="revokeCurrentAccess()">
+                    🚫 Revoke Access
+                  </button>
+                  <button id="btn-regenerate-qr" class="btn btn-sm btn-secondary" onclick="regenerateCurrentQr()">
+                    🔄 Regenerate QR
+                  </button>
+                </div>
+
+                <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.75rem; line-height: 1.4;">
+                  🛡️ <strong>Zero PII Exposure:</strong> Personal contact info (phone & email) is protected by default. Only professional scores, verified skills, and role insights are shared. Revoking access or regenerating the QR immediately disables previous links.
+                </div>
+              </div>
+
+            </div>
+          </div>
         </div>
       </div>
     </div>

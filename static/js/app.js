@@ -20,7 +20,9 @@ const state = {
   standardJobs: [],
   applications: [],
   v1Snapshot: null,
-  v2Snapshot: null
+  v2Snapshot: null,
+  currentVersion: null,
+  versions: []
 };
 
 // Initialize App on DOM Ready
@@ -30,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadSampleResumes();
   loadStandardJobs();
   loadApplications();
+  loadVersionHistory();
   
   // Auto-load high-quality Alex Rivera v2 sample on initial load so the dashboard is immediately populated!
   setTimeout(() => {
@@ -78,11 +81,17 @@ function switchTab(tabId) {
     }
   });
 
-  // If switching to multi-job or evolution, refresh them
+  // If switching to multi-job, evolution, or report, refresh them
   if (tabId === 'multijob' && state.parsedResume) {
     runMultiJobComparison();
   } else if (tabId === 'evolution') {
     renderEvolutionView();
+  } else if (tabId === 'report') {
+    if (state.currentVersion) {
+      displayVersionQr(state.currentVersion.id);
+    } else if (state.versions && state.versions.length > 0) {
+      displayVersionQr(state.versions[0].id);
+    }
   }
 }
 
@@ -861,67 +870,502 @@ function switchAndMatchJob(jobId) {
 }
 
 /* ==========================================================================
-   Resume Evolution (v1 vs v2)
+   Resume Version Evolution & QR Sharing Controllers
    ========================================================================== */
-async function renderEvolutionView() {
-  const container = document.getElementById('evolution-comparison-container');
+
+async function loadVersionHistory() {
+  const container = document.getElementById('version-history-table-body');
+  try {
+    const res = await fetch('/api/versions');
+    const versions = await res.json();
+    state.versions = versions || [];
+
+    if (container) {
+      if (state.versions.length === 0) {
+        container.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No saved versions yet.</td></tr>';
+      } else {
+        container.innerHTML = state.versions.map(v => {
+          const isShareable = v.share_status === 'Shareable';
+          return `
+            <tr>
+              <td>
+                <span class="badge ${v.version_code === 'v02' ? 'badge-info' : 'badge-neutral'}" style="font-weight: 700;">
+                  ${v.version_number}
+                </span>
+              </td>
+              <td style="color: var(--text-secondary); font-size: 0.82rem;">${v.date_display || v.created_at}</td>
+              <td>
+                <span style="font-size: 1.05rem; font-weight: 800; color: var(--accent-primary);">${v.health_score}</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">/100</span>
+              </td>
+              <td>
+                <span style="font-size: 1.05rem; font-weight: 800; color: var(--success);">${v.match_score}%</span>
+              </td>
+              <td>
+                <span class="badge ${isShareable ? 'badge-success' : 'badge-warning'}">
+                  ${isShareable ? '✓ Shareable' : '🔒 Private'}
+                </span>
+              </td>
+              <td style="max-width: 280px; font-size: 0.8rem; color: var(--text-secondary);">
+                ${escapeHtml(v.changes_summary || 'Resume analysis baseline snapshot.')}
+              </td>
+              <td>
+                <div style="display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;">
+                  <button class="btn btn-sm btn-secondary" onclick="openVersionSnapshot('${v.id}')" title="Load this version snapshot into dashboard">
+                    Open
+                  </button>
+                  <button class="btn btn-sm btn-primary" onclick="displayVersionQr('${v.id}', true)" title="View QR Card">
+                    QR Card
+                  </button>
+                  <button class="btn btn-sm" style="background: ${isShareable ? 'var(--danger-bg)' : 'var(--bg-card-alt)'}; color: ${isShareable ? 'var(--danger)' : 'var(--text-secondary)'}; border: 1px solid var(--border-subtle);" onclick="quickToggleVersionPrivacy('${v.id}', '${v.share_status}')">
+                    ${isShareable ? 'Revoke' : 'Share'}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    // Populate comparison dropdowns
+    populateVersionDiffDropdowns();
+
+    // If currentVersion is null or needs initialization, pick newest
+    if (!state.currentVersion && state.versions.length > 0) {
+      state.currentVersion = state.versions[0];
+      displayVersionQr(state.currentVersion.id, false);
+    }
+  } catch (err) {
+    console.error('Error loading versions:', err);
+    if (container) {
+      container.innerHTML = `<tr><td colspan="7" style="color: var(--danger); padding: 1rem;">Failed to load versions: ${err.message}</td></tr>`;
+    }
+  }
+}
+
+function populateVersionDiffDropdowns() {
+  const oldSelect = document.getElementById('diff-version-old-select');
+  const newSelect = document.getElementById('diff-version-new-select');
+  if (!oldSelect || !newSelect || state.versions.length === 0) return;
+
+  const currentOld = oldSelect.value;
+  const currentNew = newSelect.value;
+
+  const opts = state.versions.map(v => 
+    `<option value="${v.id}">${v.version_number} (${v.health_score} pts &bull; ${v.date_display})</option>`
+  ).join('');
+
+  oldSelect.innerHTML = opts;
+  newSelect.innerHTML = opts;
+
+  // Set default: newest vs second newest if available
+  if (state.versions.length >= 2) {
+    newSelect.value = currentNew || state.versions[0].id;
+    oldSelect.value = currentOld || state.versions[1].id;
+  } else if (state.versions.length === 1) {
+    newSelect.value = state.versions[0].id;
+    oldSelect.value = state.versions[0].id;
+  }
+
+  // Trigger diff comparison automatically
+  triggerVersionsDiff();
+}
+
+async function triggerVersionsDiff() {
+  const container = document.getElementById('what-changed-diff-container');
+  const oldSelect = document.getElementById('diff-version-old-select');
+  const newSelect = document.getElementById('diff-version-new-select');
   if (!container) return;
 
-  const v1 = state.v1Snapshot || { version: 'v1', health_score: 68, skills: ['Python', 'SQL', 'Git'], measurable_bullets: 1, risks_count: 4 };
-  const v2 = state.v2Snapshot || (state.healthData ? {
-    version: 'v2',
-    health_score: state.healthData.overall_health,
-    skills: state.skillsInfo.skill_names,
-    measurable_bullets: state.healthData.measurable_bullets_count,
-    risks_count: state.risks.length
-  } : { version: 'v2', health_score: 86, skills: ['Python', 'SQL', 'Docker', 'AWS', 'Git', 'React'], measurable_bullets: 4, risks_count: 0 });
+  const oldId = oldSelect ? oldSelect.value : null;
+  const newId = newSelect ? newSelect.value : null;
 
   try {
-    const res = await fetch('/api/compare-versions', {
+    const res = await fetch('/api/versions/compare', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ v1: v1, v2: v2 })
+      body: JSON.stringify({ version_old_id: oldId, version_new_id: newId })
     });
-    const data = await res.json();
+    const diff = await res.json();
+    if (!res.ok) throw new Error(diff.error || 'Failed to compare');
 
+    const isScoreUp = diff.score_delta_raw >= 0;
     container.innerHTML = `
-      <div class="grid-2" style="margin-bottom: 1.5rem;">
-        <div class="card" style="text-align: center; border-color: var(--border-subtle);">
-          <span class="badge badge-neutral" style="margin-bottom: 0.5rem;">Baseline: ${data.version_old}</span>
-          <div style="font-size: 2.5rem; font-weight: 800; color: var(--text-secondary);">${data.score_old}</div>
-          <div style="font-size: 0.8rem; color: var(--text-muted);">Initial Health & ATS Score</div>
+      <!-- Score & Match Delta Banner -->
+      <div class="diff-banner">
+        <div>
+          <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Comparative Revisions</span>
+          <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); margin-top: 0.2rem;">
+            ${escapeHtml(diff.version_old)} &rarr; ${escapeHtml(diff.version_new)}
+          </div>
         </div>
 
-        <div class="card" style="text-align: center; border-color: var(--success-border); background: var(--bg-card);">
-          <span class="badge badge-success" style="margin-bottom: 0.5rem;">Optimized: ${data.version_new}</span>
-          <div style="font-size: 2.5rem; font-weight: 800; color: var(--success);">${data.score_new}</div>
-          <div style="font-size: 0.8rem; color: var(--success);">
-            <strong>${data.delta_score} Points</strong> Improvement!
+        <div style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
+          <div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Score Change</div>
+            <div class="diff-delta-tag" style="color: ${isScoreUp ? 'var(--success)' : 'var(--danger)'};">
+              ${diff.score_old} &rarr; ${diff.score_new} (${diff.score_delta_formatted})
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Job Match Delta</div>
+            <div class="diff-delta-tag" style="color: var(--accent-primary);">
+              ${diff.match_old}% &rarr; ${diff.match_new}% (${diff.match_delta_formatted})
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="card">
-        <h4 style="font-size: 1rem; margin-bottom: 0.8rem; color: var(--accent-primary);">
-          🚀 What Changed & Improved:
-        </h4>
-        <ul style="padding-left: 1.2rem; font-size: 0.88rem; line-height: 1.8;">
-          ${data.improvements.map(imp => `<li>${imp}</li>`).join('')}
-        </ul>
-
-        ${data.added_skills.length > 0 ? `
-          <div style="margin-top: 1rem;">
-            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Newly Added Technologies:</span>
-            <div class="skill-pills" style="margin-top: 0.4rem;">
-              ${data.added_skills.map(s => `<span class="badge badge-success">+ ${s}</span>`).join('')}
-            </div>
+      <!-- Factual What Changed Grid -->
+      <div class="diff-grid">
+        <!-- What Improved Column -->
+        <div class="diff-card">
+          <div class="diff-card-title" style="color: var(--success);">
+            <span>🚀</span> Factual Improvements Detected:
           </div>
-        ` : ''}
+          <ul style="padding-left: 1.2rem; font-size: 0.86rem; line-height: 1.8; color: var(--text-primary);">
+            ${diff.what_improved.map(item => `<li>${escapeHtml(item)}</li>`).join('')}
+          </ul>
+
+          ${diff.newly_detected_skills && diff.newly_detected_skills.length > 0 ? `
+            <div style="margin-top: 1rem; border-top: 1px solid var(--border-subtle); padding-top: 0.75rem;">
+              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">
+                Newly Detected Technologies (${diff.newly_detected_skills.length}):
+              </span>
+              <div class="skill-pills" style="margin-top: 0.4rem;">
+                ${diff.newly_detected_skills.map(s => `<span class="badge badge-success">+ ${escapeHtml(s)}</span>`).join('')}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- Still Missing Column -->
+        <div class="diff-card">
+          <div class="diff-card-title" style="color: var(--warning);">
+            <span>⚠</span> Still Missing / Skill Deficits:
+          </div>
+          ${diff.still_missing && diff.still_missing.length > 0 ? `
+            <p style="font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+              Target role qualifications still absent from resume evidence:
+            </p>
+            <div class="skill-pills" style="margin-bottom: 1rem;">
+              ${diff.still_missing.map(g => `<span class="badge badge-warning" style="background: var(--warning-bg); border-color: var(--warning-border); color: var(--warning);">⚠ ${escapeHtml(g)}</span>`).join('')}
+            </div>
+            <p style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;">
+              Tip: Add relevant projects, certifications, or bullet metrics demonstrating hands-on experience with these tools to reach 90%+ match.
+            </p>
+          ` : `
+            <p style="font-size: 0.86rem; color: var(--success); padding: 0.5rem 0;">
+              ✓ No critical skill deficits detected for this role benchmark!
+            </p>
+          `}
+        </div>
       </div>
     `;
   } catch (err) {
-    container.innerHTML = `<p style="color: var(--danger);">Error comparing versions: ${err.message}</p>`;
+    container.innerHTML = `<p style="color: var(--danger); padding: 1rem;">Diff calculation error: ${err.message}</p>`;
   }
+}
+
+async function displayVersionQr(versionId, shouldSwitchTab = false) {
+  let v = state.versions.find(x => x.id === versionId);
+  if (!v) {
+    try {
+      const res = await fetch(`/api/versions/${versionId}`);
+      v = await res.json();
+    } catch (err) {
+      console.error('Error fetching version:', err);
+      return;
+    }
+  }
+  if (!v) return;
+
+  state.currentVersion = v;
+
+  // Header badges
+  const headerBadge = document.getElementById('qr-header-version-badge');
+  if (headerBadge) headerBadge.textContent = v.version_number;
+
+  const statusBadge = document.getElementById('qr-status-badge');
+  const isShareable = v.share_status === 'Shareable';
+  if (statusBadge) {
+    statusBadge.className = isShareable ? 'badge badge-success' : 'badge badge-warning';
+    statusBadge.textContent = isShareable ? '✓ Shareable' : '🔒 Private / Revoked';
+  }
+
+  // Version indicator & Role
+  const roleEl = document.getElementById('qr-target-role-title');
+  if (roleEl) roleEl.textContent = v.target_role || 'Software Engineer';
+
+  const dateEl = document.getElementById('qr-analysis-date-text');
+  if (dateEl) dateEl.textContent = `📅 Analyzed on ${v.date_display || v.created_at}`;
+
+  const verInd = document.getElementById('qr-version-indicator');
+  if (verInd) verInd.textContent = v.version_number;
+
+  // Scores
+  const healthEl = document.getElementById('qr-health-score-val');
+  if (healthEl) healthEl.textContent = v.health_score;
+
+  const matchEl = document.getElementById('qr-match-score-val');
+  if (matchEl) matchEl.textContent = `${v.match_score}%`;
+
+  // Fetch or generate QR code
+  try {
+    const qrRes = await fetch(`/api/versions/${v.id}/generate-qr`, { method: 'POST' });
+    const qrData = await qrRes.json();
+    if (qrRes.ok) {
+      const img = document.getElementById('qr-image-display');
+      if (img) img.src = qrData.qr_data_url;
+
+      const input = document.getElementById('qr-share-url-input');
+      if (input) input.value = qrData.share_url;
+
+      const openLink = document.getElementById('qr-open-public-link');
+      if (openLink) openLink.href = qrData.share_url;
+    }
+  } catch (err) {
+    console.error('Error loading QR image:', err);
+  }
+
+  // Privacy status text
+  const privacyText = document.getElementById('qr-privacy-status-text');
+  if (privacyText) {
+    privacyText.textContent = isShareable ? 'Status: Publicly Shareable (Safe - Contact info hidden)' : 'Status: Private / Access Revoked';
+    privacyText.style.color = isShareable ? 'var(--success)' : 'var(--warning)';
+  }
+
+  // Toggle button text
+  const toggleBtn = document.getElementById('btn-toggle-privacy');
+  if (toggleBtn) {
+    toggleBtn.textContent = isShareable ? '🔒 Make Private' : '🌐 Make Shareable';
+  }
+
+  if (shouldSwitchTab) {
+    switchTab('report');
+    const target = document.getElementById('qr-section-container');
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+}
+
+async function generateShareQr() {
+  if (!state.parsedResume || !state.healthData) {
+    alert('Please upload or load a resume analysis before generating a version snapshot.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-generate-share-qr');
+  const origText = btn ? btn.innerHTML : '⚡ Generate Share QR';
+  if (btn) {
+    btn.innerHTML = '⏳ Generating QR...';
+    btn.disabled = true;
+  }
+
+  try {
+    const payload = {
+      parsed_resume: state.parsedResume,
+      skills_info: state.skillsInfo,
+      health: state.healthData,
+      match: state.currentMatch,
+      skill_gap: state.currentSkillGap,
+      target_role: state.currentMatch ? state.currentMatch.target_role : 'Software Engineer',
+      filename: state.parsedResume.filename || 'Alex_Rivera_Optimized.pdf'
+    };
+
+    const res = await fetch('/api/versions/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to save version');
+
+    state.currentVersion = data.version;
+    await loadVersionHistory();
+    await displayVersionQr(data.version.id, false);
+
+    alert(`🎉 Successfully generated Share QR for ${data.version.version_number}!\nShare URL: ${data.share_url}`);
+  } catch (err) {
+    alert('Error generating share QR: ' + err.message);
+  } finally {
+    if (btn) {
+      btn.innerHTML = origText;
+      btn.disabled = false;
+    }
+  }
+}
+
+async function saveCurrentAsNewVersion() {
+  await generateShareQr();
+}
+
+function copyShareLink() {
+  const input = document.getElementById('qr-share-url-input');
+  if (!input || !input.value) {
+    alert('No share link available yet.');
+    return;
+  }
+
+  navigator.clipboard.writeText(input.value).then(() => {
+    alert('✅ Copied verified ResumeIQ share link to clipboard!\n\n' + input.value);
+  }).catch(() => {
+    input.select();
+    document.execCommand('copy');
+    alert('✅ Copied share link to clipboard!');
+  });
+}
+
+function downloadQrPng() {
+  if (!state.currentVersion) {
+    alert('Please generate or select a version first.');
+    return;
+  }
+  const shareId = state.currentVersion.share_id;
+  const a = document.createElement('a');
+  a.href = `/api/qr/${shareId}.png`;
+  a.download = `ResumeIQ_QR_${state.currentVersion.version_code || 'v'}.png`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function shareViaWebApi() {
+  const shareUrl = document.getElementById('qr-share-url-input')?.value;
+  if (!shareUrl) {
+    alert('No share link generated yet.');
+    return;
+  }
+
+  if (navigator.share && state.currentVersion) {
+    navigator.share({
+      title: `ResumeIQ - ${state.currentVersion.version_number} Analysis`,
+      text: `View verified ResumeIQ resume analysis: Health Score ${state.currentVersion.health_score}/100, Job Match ${state.currentVersion.match_score}%`,
+      url: shareUrl
+    }).catch(e => {
+      console.log('Share dismissed:', e);
+    });
+  } else {
+    copyShareLink();
+  }
+}
+
+async function toggleCurrentPrivacy() {
+  if (!state.currentVersion) return;
+  const currentStatus = state.currentVersion.share_status;
+  const newStatus = currentStatus === 'Shareable' ? 'Private' : 'Shareable';
+
+  try {
+    const res = await fetch(`/api/versions/${state.currentVersion.id}/privacy`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to update privacy');
+
+    state.currentVersion = data.version;
+    await loadVersionHistory();
+    await displayVersionQr(data.version.id, false);
+    alert(`Updated privacy for ${data.version.version_number} to "${newStatus}".`);
+  } catch (err) {
+    alert('Error toggling privacy: ' + err.message);
+  }
+}
+
+async function revokeCurrentAccess() {
+  if (!state.currentVersion) return;
+  if (!confirm(`Are you sure you want to revoke public access for ${state.currentVersion.version_number}? The link and QR code will immediately be disabled.`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/versions/${state.currentVersion.id}/revoke`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to revoke access');
+
+    state.currentVersion = data.version;
+    await loadVersionHistory();
+    await displayVersionQr(data.version.id, false);
+    alert(`🔒 Access revoked! Public share page and QR code for ${data.version.version_number} are now disabled.`);
+  } catch (err) {
+    alert('Error revoking access: ' + err.message);
+  }
+}
+
+async function regenerateCurrentQr() {
+  if (!state.currentVersion) return;
+  if (!confirm(`Regenerate QR code for ${state.currentVersion.version_number}? This will permanently invalidate previous QR codes and links, issuing a brand new secure access key.`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/versions/${state.currentVersion.id}/regenerate-qr`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to regenerate QR');
+
+    state.currentVersion = data.version;
+    await loadVersionHistory();
+    await displayVersionQr(data.version.id, false);
+    alert(`🔄 Fresh QR Code Generated!\nPrevious QR codes and links are now permanently invalidated.\nNew Share URL: ${data.share_url}`);
+  } catch (err) {
+    alert('Error regenerating QR: ' + err.message);
+  }
+}
+
+async function quickToggleVersionPrivacy(versionId, currentStatus) {
+  const newStatus = currentStatus === 'Shareable' ? 'Private' : 'Shareable';
+  try {
+    const res = await fetch(`/api/versions/${versionId}/privacy`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    });
+    if (res.ok) {
+      await loadVersionHistory();
+      if (state.currentVersion && state.currentVersion.id === versionId) {
+        await displayVersionQr(versionId, false);
+      }
+    }
+  } catch (err) {
+    console.error('Error in quickToggleVersionPrivacy:', err);
+  }
+}
+
+function openVersionSnapshot(versionId) {
+  const v = state.versions.find(x => x.id === versionId);
+  if (!v) return;
+
+  // Load snapshot values to dashboard
+  document.getElementById('dash-candidate-name').textContent = v.candidate_name || 'Candidate';
+  document.getElementById('dash-contact-summary').textContent = `${v.contact?.email || 'Protected'} • ${v.contact?.phone || 'Protected'}`;
+  document.getElementById('dash-health-number').textContent = v.health_score;
+  setCircleGauge('dash-health-gauge', v.health_score);
+
+  const roleEl = document.getElementById('dash-job-role-title');
+  if (roleEl) roleEl.textContent = v.target_role;
+
+  const matchPct = document.getElementById('dash-job-match-pct');
+  if (matchPct) matchPct.textContent = `${v.match_score}%`;
+
+  const matchBar = document.getElementById('dash-job-match-bar');
+  if (matchBar) matchBar.style.width = `${v.match_score}%`;
+
+  // Switch to dashboard and notify
+  switchTab('dashboard');
+  alert(`📂 Loaded snapshot of ${v.version_number} (${v.date_display}). Health: ${v.health_score}/100, Match: ${v.match_score}%.`);
+}
+
+function renderEvolutionView() {
+  loadVersionHistory();
 }
 
 /* ==========================================================================

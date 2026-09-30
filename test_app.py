@@ -86,7 +86,98 @@ def run_tests():
     assert "report_url" in pdf_res
     print(f"[PASS] Executive PDF generated at: {pdf_res['report_url']}")
 
-    print("ALL TESTS PASSED WITH 100% SUCCESS!")
+    # =========================================================================
+    # QR Version & Sharing Feature Tests
+    # =========================================================================
+    print("Testing GET /api/versions ...")
+    res = client.get('/api/versions')
+    assert res.status_code == 200
+    versions = res.get_json()
+    assert len(versions) >= 2, "Expected at least seeded Version 01 & 02"
+    print(f"[PASS] Retrieved {len(versions)} resume versions")
+
+    print("Testing POST /api/versions/save (Generate Version 03 & Share QR) ...")
+    save_res = client.post('/api/versions/save', json={
+        "parsed_resume": upload_data,
+        "skills_info": upload_data["skills_info"],
+        "health": upload_data["health"],
+        "match": match_data["match"],
+        "skill_gap": match_data["skill_gap"],
+        "target_role": "Senior Full Stack Engineer",
+        "filename": "Alex_Rivera_Optimized_v3.pdf"
+    })
+    assert save_res.status_code == 200
+    save_data = save_res.get_json()
+    assert save_data["status"] == "success"
+    assert "qr_data_url" in save_data
+    assert save_data["qr_data_url"].startswith("data:image/png;base64,")
+    new_ver = save_data["version"]
+    new_ver_id = new_ver["id"]
+    share_id = new_ver["share_id"]
+    print(f"[PASS] Created {new_ver['version_number']} with secure share ID: {share_id}")
+
+    print("Testing GET /api/qr/<share_id>.png ...")
+    qr_img_res = client.get(f'/api/qr/{share_id}.png')
+    assert qr_img_res.status_code == 200
+    assert qr_img_res.mimetype == 'image/png'
+    assert len(qr_img_res.data) > 100
+    print("[PASS] Served high-resolution QR PNG")
+
+    print("Testing GET /share/<share_id> (Public Landing Page) ...")
+    share_page_res = client.get(f'/share/{share_id}')
+    assert share_page_res.status_code == 200
+    html_content = share_page_res.get_data(as_text=True)
+    assert new_ver["version_number"] in html_content
+    assert "Resume Health" in html_content
+    assert "Matched Skills" in html_content
+    # Verify candidate phone is hidden by privacy protection
+    assert "(555) 234-5678" not in html_content
+    print("[PASS] Public share landing page verified (with zero PII leakage)")
+
+    print("Testing POST /api/versions/<id>/privacy (Toggle to Private) ...")
+    priv_res = client.post(f'/api/versions/{new_ver_id}/privacy', json={"status": "Private"})
+    assert priv_res.status_code == 200
+    assert priv_res.get_json()["version"]["share_status"] == "Private"
+    
+    # Verify access is now restricted
+    priv_check_res = client.get(f'/share/{share_id}')
+    assert priv_check_res.status_code == 403
+    assert "This Analysis is Private" in priv_check_res.get_data(as_text=True)
+    print("[PASS] Privacy toggle blocks public access with 403 restricted state")
+
+    print("Testing POST /api/versions/<id>/regenerate-qr (Invalidate old ID, issue new QR) ...")
+    regen_res = client.post(f'/api/versions/{new_ver_id}/regenerate-qr')
+    assert regen_res.status_code == 200
+    regen_data = regen_res.get_json()
+    new_share_id = regen_data["share_id"]
+    assert new_share_id != share_id, "Regenerated share ID must be different"
+    assert regen_data["qr_data_url"].startswith("data:image/png;base64,")
+
+    # Old link should now be 404/invalid
+    old_check_res = client.get(f'/share/{share_id}')
+    assert old_check_res.status_code == 403 or old_check_res.status_code == 404
+
+    # New link should now work
+    new_check_res = client.get(f'/share/{new_share_id}')
+    assert new_check_res.status_code == 200
+    print("[PASS] Regenerated QR code and successfully invalidated previous link")
+
+    print("Testing POST /api/versions/compare (Strict 'What Changed?' Diff) ...")
+    diff_res = client.post('/api/versions/compare', json={
+        "version_old_id": "ver_01",
+        "version_new_id": "ver_02"
+    })
+    assert diff_res.status_code == 200
+    diff_data = diff_res.get_json()
+    assert "score_delta_formatted" in diff_data
+    assert "what_improved" in diff_data
+    assert "still_missing" in diff_data
+    assert len(diff_data["what_improved"]) > 0
+    print(f"[PASS] Diff engine verified: {diff_data['version_old']} -> {diff_data['version_new']} ({diff_data['score_delta_formatted']})")
+
+    print("\n=======================================================")
+    print("ALL 12 BACKEND & SHARING TESTS PASSED WITH 100% SUCCESS!")
+    print("=======================================================\n")
 
 if __name__ == "__main__":
     run_tests()

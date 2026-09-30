@@ -8,7 +8,7 @@ import os
 import uuid
 import json
 from datetime import datetime
-from flask import Flask, request, jsonify, render_template, send_from_directory
+from flask import Flask, request, jsonify, render_template, send_from_directory, Response
 from werkzeug.utils import secure_filename
 
 from resume_parser import parse_resume, extract_text
@@ -17,6 +17,7 @@ from matcher import MatchEngine
 from analyzer import ResumeAnalyzer
 from recommendations import CareerAdvisor
 from report_generator import generate_pdf_report
+from share_manager import ShareManager
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'resumeiq-secret-key-2026'
@@ -31,6 +32,7 @@ skill_extractor = SkillExtractor()
 match_engine = MatchEngine(skill_extractor)
 analyzer = ResumeAnalyzer()
 advisor = CareerAdvisor()
+share_manager = ShareManager()
 
 # In-memory storage for active sessions & job tracker
 job_applications = [
@@ -364,6 +366,201 @@ def delete_application(app_id):
     global job_applications
     job_applications = [a for a in job_applications if a["id"] != app_id]
     return jsonify({"status": "success"})
+
+
+# ==============================================================================
+# QR-Based Resume Version & Sharing APIs
+# ==============================================================================
+
+@app.route('/share/<share_id>')
+def public_share_page(share_id):
+    """
+    Public read-only landing page for shared resume analysis versions.
+    Does not expose private contact info (email/phone) unless explicitly enabled by owner.
+    """
+    version_data = share_manager.get_version_by_share_id(share_id)
+    if not version_data or version_data.get("revoked"):
+        return render_template(
+            'share.html',
+            is_revoked=True,
+            is_private=True,
+            version={"version_number": version_data.get("version_number", "Resume Version") if version_data else "Resume Version"}
+        ), 403
+
+    return render_template(
+        'share.html',
+        is_revoked=False,
+        is_private=False,
+        version=version_data
+    )
+
+
+@app.route('/api/qr/<share_id>.png')
+def download_qr_image(share_id):
+    """
+    Serves the raw PNG image of the QR code pointing to the public share link.
+    """
+    version_data = share_manager.get_version_by_share_id(share_id)
+    if not version_data or version_data.get("revoked"):
+        return jsonify({"error": "Share link is private or revoked."}), 404
+
+    target_url = f"{request.url_root.rstrip('/')}/share/{share_id}"
+    png_bytes = share_manager.generate_qr_png_bytes(target_url)
+    return Response(png_bytes, mimetype='image/png', headers={
+        "Content-Disposition": f"inline; filename=ResumeIQ_QR_{share_id}.png"
+    })
+
+
+@app.route('/api/versions', methods=['GET'])
+def get_versions():
+    """Returns list of all saved resume versions."""
+    return jsonify(share_manager.get_all_versions())
+
+
+@app.route('/api/versions/<version_id>', methods=['GET'])
+def get_version_details(version_id):
+    """Returns full details of a specific version snapshot."""
+    v = share_manager.get_version(version_id)
+    if not v:
+        return jsonify({"error": "Version not found"}), 404
+    return jsonify(v)
+
+
+@app.route('/api/versions/save', methods=['POST'])
+def save_version():
+    """
+    Saves the current analysis state as a version (e.g. Version 01, Version 02, Version 03).
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No payload received"}), 400
+
+    parsed_resume = data.get("parsed_resume", {})
+    skills_info = data.get("skills_info", {})
+    health = data.get("health", {})
+    match = data.get("match", None)
+    skill_gap = data.get("skill_gap", None)
+    target_role = data.get("target_role", "Software Engineer")
+    filename = data.get("filename", "Resume.pdf")
+    pdf_report_url = data.get("pdf_report_url", None)
+
+    new_ver = share_manager.save_or_create_version(
+        parsed_resume=parsed_resume,
+        skills_info=skills_info,
+        health_data=health,
+        match_data=match,
+        skill_gap_data=skill_gap,
+        target_role=target_role,
+        filename=filename,
+        pdf_report_url=pdf_report_url
+    )
+
+    # Generate QR data url
+    target_url = f"{request.url_root.rstrip('/')}/share/{new_ver['share_id']}"
+    qr_data_url = share_manager.generate_qr_data_url(target_url)
+
+    return jsonify({
+        "status": "success",
+        "version": new_ver,
+        "share_url": target_url,
+        "qr_data_url": qr_data_url
+    })
+
+
+@app.route('/api/versions/<version_id>/generate-qr', methods=['POST'])
+def generate_version_qr(version_id):
+    """
+    Generates QR code for a given version.
+    """
+    v = share_manager.get_version(version_id)
+    if not v:
+        return jsonify({"error": "Version not found"}), 404
+
+    target_url = f"{request.url_root.rstrip('/')}/share/{v['share_id']}"
+    qr_data_url = share_manager.generate_qr_data_url(target_url)
+
+    return jsonify({
+        "status": "success",
+        "version": v,
+        "share_id": v["share_id"],
+        "share_url": target_url,
+        "qr_data_url": qr_data_url
+    })
+
+
+@app.route('/api/versions/<version_id>/regenerate-qr', methods=['POST'])
+def regenerate_version_qr(version_id):
+    """
+    Regenerates a new unique share ID, invalidating previous QR codes & links.
+    """
+    updated_v = share_manager.regenerate_share_qr(version_id)
+    if not updated_v:
+        return jsonify({"error": "Version not found"}), 404
+
+    target_url = f"{request.url_root.rstrip('/')}/share/{updated_v['share_id']}"
+    qr_data_url = share_manager.generate_qr_data_url(target_url)
+
+    return jsonify({
+        "status": "success",
+        "message": "Previous QR code and link invalidated. New QR generated.",
+        "version": updated_v,
+        "share_id": updated_v["share_id"],
+        "share_url": target_url,
+        "qr_data_url": qr_data_url
+    })
+
+
+@app.route('/api/versions/<version_id>/privacy', methods=['POST'])
+def update_version_privacy(version_id):
+    """
+    Toggles privacy status (Private vs Shareable) and contact visibility.
+    """
+    data = request.get_json() or {}
+    share_status = data.get("status", "Shareable")
+    allow_contact = data.get("allow_contact", None)
+
+    v = share_manager.set_privacy(version_id, share_status, allow_contact)
+    if not v:
+        return jsonify({"error": "Version not found"}), 404
+
+    return jsonify({"status": "success", "version": v})
+
+
+@app.route('/api/versions/<version_id>/revoke', methods=['POST'])
+def revoke_version_access(version_id):
+    """
+    Revokes access immediately, setting share status to Private.
+    """
+    v = share_manager.revoke_access(version_id)
+    if not v:
+        return jsonify({"error": "Version not found"}), 404
+
+    return jsonify({"status": "success", "message": "Access revoked. Link and QR are now disabled.", "version": v})
+
+
+@app.route('/api/versions/compare', methods=['POST'])
+def compare_versions_diff():
+    """
+    Computes strict, fact-based 'What Changed?' differences between two versions.
+    """
+    data = request.get_json() or {}
+    old_id = data.get("version_old_id")
+    new_id = data.get("version_new_id")
+
+    v_old = share_manager.get_version(old_id)
+    v_new = share_manager.get_version(new_id)
+
+    if not v_old or not v_new:
+        # Fallback to last two versions if not provided
+        all_v = share_manager.get_all_versions()
+        if len(all_v) >= 2:
+            v_new = all_v[0]
+            v_old = all_v[1]
+        else:
+            return jsonify({"error": "Insufficient versions to compare"}), 400
+
+    diff = share_manager.compare_two_versions(v_old, v_new)
+    return jsonify(diff)
 
 
 if __name__ == '__main__':
